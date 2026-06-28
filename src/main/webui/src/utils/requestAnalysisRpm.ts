@@ -17,6 +17,20 @@ export function isRpmArchChoice(value: string | undefined): value is RpmArchChoi
   return value !== undefined && RPM_ARCH_CHOICES.includes(value as RpmArchChoice);
 }
 
+/** RPM Name: alphanumerics and -, _, ., + (rpm-spec.5). */
+const RPM_NAME_PATTERN = /^[a-zA-Z0-9._+-]+$/;
+
+/** RPM Version/Release: alphanumerics, ., _, +, ~, ^ — no hyphen (rpm-version.7). */
+const RPM_VERSION_RELEASE_PATTERN = /^[a-zA-Z0-9._+~^]+$/;
+
+function isValidRpmName(value: string): boolean {
+  return RPM_NAME_PATTERN.test(value);
+}
+
+function isValidRpmVersionOrRelease(value: string): boolean {
+  return RPM_VERSION_RELEASE_PATTERN.test(value);
+}
+
 /** Parses a trimmed RPM N-V-R: release after last hyphen, version before that, name is the leading remainder (may contain hyphens). */
 export function parseTrimmedRpmNvr(
   trimmed: string
@@ -34,6 +48,9 @@ export function parseTrimmedRpmNvr(
   const name = remainder.slice(0, secondHyphen).trim();
   const version = remainder.slice(secondHyphen + 1).trim();
   if (name === "" || version === "" || release === "") {
+    return null;
+  }
+  if (!isValidRpmName(name) || !isValidRpmVersionOrRelease(version) || !isValidRpmVersionOrRelease(release)) {
     return null;
   }
   return { name, version, release };
